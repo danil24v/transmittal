@@ -1,0 +1,93 @@
+<h2>{{trans.apar_number}}</h2>
+{% if trans.type != "ROCKET" %}
+<div class="form-group">
+  <label for="inptApar">APAR number</label>
+  <input readonly type="text" class="form-control" id="inptApar" value="{{trans.apar_number}}">
+</div>
+{% endif %}
+<div class="form-group fields">
+  <label for="inptJirat">Jira packaging ticket</label>
+  <input type="text" class="form-control" name="inptJirat" id="inptJirat"
+         placeholder="ABC-1234" value="{{trans.ticket}}">
+  <div class="invalid-feedback" errorFor="inptJirat"></div>
+</div>
+{% if trans.type == "IBM" %}
+<div class="form-group fields">
+  <label for="inptDs">Fix-related datasets(optional):</label>
+  <textarea class="form-control" name="inptDs"
+            id="inptDs" rows="4">{{get_dict_val(trans.json_data, 'ibm_ds')}}</textarea>
+</div>
+{% else %}
+<div class="form-group" style="margin-top: 20px;">
+  <label for="inptComp">Component</label>
+  <input type="text" class="form-control" name="inptComp" id="inptComp"
+         placeholder="" value="{{get_dict_val(trans.json_data, 'rkt_comp')}}">
+  <div class="invalid-feedback" errorFor="inptComp"></div>
+</div>
+<div class="form-group" style="margin-top: 20px;">
+  <label for="selType">Type</label>
+  <select class="form-select" name="selType" id="selType" >
+    <option value="Release"
+            {%if get_dict_val(trans.json_data, 'rkt_type') == "Release" %} selected {% endif %}
+    >Release</option>
+    <option value="Type2"
+      {%if get_dict_val(trans.json_data, 'rkt_type') == "Type2" %} selected {% endif %}">Type2</option>
+  </select>
+</div>
+<div class="form-group" style="margin-top: 20px;">
+  <label for="inptDesc">Description</label>
+  <textarea class="form-control" id="inptDesc" name="inptDesc"
+            rows="4">{{get_dict_val(trans.json_data, 'rkt_desc')}}</textarea>
+</div>
+{% endif %}
+<div class="row" style="margin-top: 20px;">
+  <div class="col">
+    <input type="submit" name="btnSave" value="Save" class="btn btn-outline-success"/>
+    <input type="button" id="btnCpy" value="Copy" class="btn btn-outline-primary"/>
+    <input type="button" id="btnDel" value="Delete" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delModal"/>
+  </div>
+</div>
+<script type="text/coffeescript">
+btnDelYes = $("#btnDelYes")[0]
+inptJirat = $("#inptJirat")[0]
+inptComp = $("#inptComp")[0]
+
+validateTicket = () ->
+  if !REGEXP_TICKET.test(inptJirat.value)
+    setElementError(inptJirat, true)
+    setError('inptJirat', 'Bad jira ticket, example: RPDKG-12354', true)
+  else
+    setElementError(inptJirat, false)
+    setError('inptJirat', '', false)
+
+
+validateComponent = () ->
+    if !REGEXP_COMP.test(inptComp.value)
+      setElementError(inptComp, true)
+      setError('inptComp', 'Bad component. Example: ADBDAT,ADBTEP2', true)
+    else
+      setElementError(inptComp, false)
+      setError('inptComp', '', false)
+
+processMainTab = ->
+
+  inptJirat.onkeyup = ->
+    validateTicket()
+
+  if inptComp != undefined
+    console.log inptComp
+    inptComp.onkeyup = ->
+      validateComponent()
+
+  btnDelYes.onclick = ->
+    btnDelYes.enabled = false
+    prod_id = "{{trans.prd_id}}"
+    url = "/delete/transmittal/{{trans.id}}"
+    doReq("DELETE", url, null, redirProd = () -> window.location.replace "/transmittals/" + prod_id, null)
+
+  validateTicket()
+
+# END processMainTab
+
+processMainTab()
+</script>

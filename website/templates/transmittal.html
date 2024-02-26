@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block content %}
+<!-- DELETE MODAL -->
+<div class="modal fade" id="delModal" tabindex="-1" aria-labelledby="delModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="delModalLabel">Delete transmittal</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+          Are you sure?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+        <button type="button" class="btn btn-primary" id="btnDelYes">Yes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<nav>
+  <div class="nav nav-tabs" id="nav-tab" role="tablist">
+    <button class="nav-link active" id="nav-trans-tab" data-bs-toggle="tab" data-bs-target="#nav-trans" type="button" role="tab" aria-controls="nav-trans" aria-selected="true">Transmittal</button>
+    <button class="nav-link" id="nav-apars-tab" data-bs-toggle="tab" data-bs-target="#nav-apars" type="button" role="tab" aria-controls="nav-apars" aria-selected="false">APARs</button>
+    <button class="nav-link" id="nav-holds-tab" data-bs-toggle="tab" data-bs-target="#nav-holds" type="button" role="tab" aria-controls="nav-holds" aria-selected="false">HOLDs</button>
+    <button class="nav-link" id="nav-rels-tab" data-bs-toggle="tab" data-bs-target="#nav-rels" type="button" role="tab" aria-controls="nav-rels" aria-selected="false">RELs</button>
+  </div>
+</nav>
+
+<ul class="nav nav-tabs">
+    <li class="nav-item">
+        <a class="nav-link {% if tab == "transmittal" %} active {% endif %}"
+      aria-current="page"
+      href="{{ url_for('edit_main', transmittal_id=tid) }}">Transmittal
+      {% if "#trans" in trans.valid_issues %}
+        {% include "components/alert_icon.html" %}
+      {% endif %}
+        </a>
+    </li>
+    {% if trans.type != "ROCKET" %}
+    <li class="nav-item">
+        <a class="nav-link {% if tab == "apars" %} active {% endif %}"
+      aria-current="page"
+      href="{{ url_for('edit_apars', transmittal_id=tid) }}">APARs
+      {% if "#apar" in trans.valid_issues %}
+        {% include "components/alert_icon.html" %}
+      {% endif %}
+        </a>
+    </li>
+    {% endif %}
+    <li class="nav-item">
+        <a class="nav-link {% if tab == "holds" %} active {% endif %}"
+      aria-current="page"
+      href="{{ url_for('edit_holds', transmittal_id=tid) }}">HOLDs
+      {% if "#hld" in trans.valid_issues %}
+        {% include "components/alert_icon.html" %}
+      {% endif %}
+        </a>
+    </li>
+    {% if trans.type != "ROCKET" %}
+    <li class="nav-item">
+        <a class="nav-link {% if tab == "rels" %} active {% endif %}"
+      aria-current="page"
+      href="{{ url_for('edit_rels', transmittal_id=tid) }}">RELs
+        </a>
+    </li>
+    {% endif %}
+</ul>
+<div class="container tab" style="margin-top: 20px;">
+  {% include "alerts.html" %}
+
+  {% if tab == "transmittal": %}
+    {% include "tabs/transmit.html" %}
+  {% endif %}
+  {% if tab == "apars": %}
+    {% include "tabs/apars.html" %}
+  {% endif %}
+
+  {% if tab == "holds": %}
+    {% include "tabs/holds.html" %}
+  {% endif %}
+
+  {% if tab == "rels": %}
+    {% include "tabs/rels.html" %}
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block style %}
+<style>
+body {
+    /* background-image: url({{ url_for('static', filename='background.jpg') }}); */
+}
+
+.tab {
+    animation: fadein 0.5s;
+}
+
+@keyframes fadein {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+</style>
+{% endblock %}

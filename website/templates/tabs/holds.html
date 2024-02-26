@@ -1,0 +1,83 @@
+<label for="selHold">HOLD type</label>
+<div class="row">
+  <div class="col-sm-3">
+    <select class="form-select" name="selHold" id="selHold" >
+      {% for hold_type in hold_types %} 
+        <option value="{{hold_type.name}}">{{hold_type.name}}</option>
+      {% endfor %} 
+    </select>
+  </div>
+  <div class="col-sm-3">
+    <button type="submit" name="btnHoldAdd" id="btnHoldAdd" value="Add" class="btn btn-primary">Add</button>
+  </div>
+</div>
+<table class="table" id="tblHolds">
+  <thead>
+    <tr>
+      <th scope="col"></th>
+    </tr>
+  </thead>
+  <tbody>
+    {%for hold in trans.holds%} 
+    <tr>
+      <th scope="row">
+        <a>++{{hold.type}}</a>
+        <textarea class="form-control hold-edit" rows="5" style="margin-bottom: 10px;"
+           name="hlField {{hold.id}}"  type="{{hold.type}}">{{hold.text}}</textarea>
+        <div class="invalid-feedback" errorFor="hlField {{hold.id}}"></div>
+        <button type="submit" class="btn btn-danger" name="btnDel" value="{{hold.id}}">Delete</button>
+      </th>
+    </tr>
+    {%endfor%} 
+  </tbody>
+</table>
+{%if trans.holds|length > 0 %}
+<input type="submit" name="btnSave" value="Save" class="btn btn-outline-success"/>
+{% endif %}
+<input type="hidden" id="val" name="valid" value="false">
+<script type="text/coffeescript">
+console.log "holds"
+hRestrictions = 
+  {% for hold in hold_types %} 
+  "{{hold.name}}":
+    linelen: {{hold.linelen}}
+    maxsize: {{hold.maxsize}}
+    regexp: "{{hold.regexp}}"
+    isUrgent: "true"
+  {% endfor %} 
+
+btnHoldAdd = $("#btnHoldAdd")[0]
+holdEdits = $(".hold-edit")
+selHold = $("#selHold")[0]
+valFlag = $("#val")[0]
+console.log holdEdits
+
+badCallback = (data) ->
+  alert data.responseText
+
+validateHoldInput = (editBox) ->
+  currHoldType = editBox.getAttribute "type"
+  name = editBox.getAttribute "name"
+  text = editBox.value
+  error = validateInput hRestrictions, currHoldType, text
+  if error != ''
+    console.log currHoldType + "error:" + error
+    setElementError(editBox, true)
+    setError(name, error, true)
+    return false
+
+  setElementError(editBox, false)
+  setError(name, '', false)
+  return true
+
+
+processHoldsTab = ->
+
+  for editBox in holdEdits
+    do (editBox) ->
+      validateHoldInput(editBox)
+      editBox.onkeyup = ->
+        validateHoldInput(editBox)
+
+processHoldsTab()
+</script>

@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block content %}
+<!-- CREATE APAR MODAL -->
+<div class="modal fade" id="transModal" tabindex="-1" aria-labelledby="transModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="transModalLabel">Create transmittal</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="inptApar">
+            {% if prod.type != "ROCKET" %}
+            APAR number
+            {% else %}
+            Jira packaging ticket
+            {% endif %}
+          </label>
+          <input type="text" class="form-control" id="inptApar" name="inptApar">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary" name="btnCreate">Create</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ============================== -->
+<!-- PRODUCTS LIST PAGE -->
+<!-- ============================== -->
+{% if page == "main" %}
+<div class="container">
+  <div class="row">
+    <div class="col-8"><h2>Products list</h2></div>
+    <div class="col-4">
+    <input type="text" class="form-control" name="inptSearch" id="inptSearch" placeholder="Search...">
+    </div>
+  </div>
+</div>
+<div class="container" style="margin-top: 20px;">
+  <table class="table table-hover" style="margin-top: 28px;">
+    <thead>
+      <tr>
+        <th scope="col">RTQ</th>
+        <th scope="col">FMID</th>
+        <th scope="col">FULL NAME</th>
+        <th scope="col">TYPE</th>
+        <th scope="col">FAMILY</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for prod in products %}
+      <tr name="trProd"
+      class="zoom"
+      href="{{ url_for('main_page_transmittals', product_id=prod.id) }}"
+      style="cursor: pointer;">
+        <th scope="row">{{prod.qual}}</th>
+        <td>{{prod.fmid}}</td>
+        <td>{{prod.description}}</td>
+        <td>{{prod.type}}</td>
+        <td>{{prod.family}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+<!-- ============================== -->
+<!-- TRANSMITTALS FOR PRODUCT PAGE -->
+<!-- ============================== -->
+{% if page == "transmittals" %}
+<div class="container">
+  <div class="row">
+    <div class="col-8"><h2>{{prod.description}}</h2></div>
+    <div class="col-4">
+    <input type="text" class="form-control" name="inptSearch" id="inptSearch" placeholder="Search...">
+    </div>
+  </div>
+</div>
+<button type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#transModal">Create new transmittal</button>
+{% include "alerts.html" %}
+<div class="container" style="margin-top: 20px;">
+  <table class="table table-hover" style="margin-top: 28px;">
+    <thead>
+      <tr>
+        <th scope="col">
+          {% if prod.type != "ROCKET" %}
+          APAR NUMBER
+          {% else %}
+          ISSUE NUMBER
+          {% endif %}
+        </th>
+        <th scope="col">JIRA TICKET</th>
+        <th scope="col">DATE CREATED</th>
+        <th scope="col">CREATED BY</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for trans in transmittals %}
+      <tr name="trTrans"
+      class="zoom"
+      href="{{ url_for('edit_main', transmittal_id=trans.id) }}"
+      style="cursor: pointer;">
+        <th scope="row">{{trans.apar_number}}</th>
+        <td>{{trans.ticket}}</td>
+        <td>{{trans.date}}</td>
+        <td>{{trans.creator}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block style %}
+<style>
+
+.zoom {
+  transition: transform .3s;
+  animation: fadein 1s;
+}
+
+@keyframes fadein {
+  from { transform: translateX(20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.zoom:hover {
+  transform: scale(1.02);
+}
+</style>
+{% endblock %}
+
+{% block script %}
+ <script type="text/coffeescript">
+handleSearchInput = (currentPage, trElements) ->
+  inptSearch = $("#inptSearch")[0]
+  for tr in trElements
+    do (tr) ->
+      tr.innerData = tr.innerHTML.replace(/<\/?[^>]+(>|$)/g, "")
+      tr.onclick = ->
+        href = tr.getAttribute "href"
+        location.href = href
+
+  inptSearch.onkeyup = ->
+    for tr in trElements
+      do (tr) ->
+        innerData = tr.innerData.toLowerCase()
+        inptText = inptSearch.value.toLowerCase()
+        if inptText.trim() == "" | innerData.includes inptText
+          tr.style.display = ""
+        else
+          tr.style.display = "none"
+
+processMainPage = (currentPage) ->
+  trElements = $("tr[name='trProd']")
+  handleSearchInput(currentPage, trElements)
+
+processTransmittalsPage = (currentPage) ->
+  trElements = $("tr[name='trTrans']")
+  handleSearchInput(currentPage, trElements)
+
+
+currentPage = "" + "{{page}}"
+console.log "currentPage " + currentPage
+switch currentPage
+  when "main"
+    processMainPage(currentPage)
+  when "transmittals"
+    processTransmittalsPage(currentPage)
+</script>
+{% endblock %}
