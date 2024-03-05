@@ -1,4 +1,3 @@
-{% if edit_apar == None: %}
 <label for="inptAdda">Additional APAR</label>
 <div class="row">
   <div class="col-sm-3">
@@ -8,32 +7,34 @@
     <button type="submit" name="btnAparAdd" class="btn btn-primary" value="Add">Add</button>
   </div>
 </div>
-<table class="table">
-  <thead>
-    <tr>
-      <th scope="col"></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th scope="row">
-        {%for apar in trans.apars%} 
-        <a href="apars/{{apar.id}}"
-          class="btn btn-light"
-          role="button"
-          style="margin-bottom: 4px;">{{apar.apar_number}}
-          {% if apar.apar_number in trans.valid_issues %}
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-emoji-frown" viewBox="0 0 16 16">
-            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-            <path d="M4.285 12.433a.5.5 0 0 0 .683-.183A3.5 3.5 0 0 1 8 10.5c1.295 0 2.426.703 3.032 1.75a.5.5 0 0 0 .866-.5A4.5 4.5 0 0 0 8 9.5a4.5 4.5 0 0 0-3.898 2.25.5.5 0 0 0 .183.683M7 6.5C7 7.328 6.552 8 6 8s-1-.672-1-1.5S5.448 5 6 5s1 .672 1 1.5m4 0c0 .828-.448 1.5-1 1.5s-1-.672-1-1.5S9.448 5 10 5s1 .672 1 1.5"/>
-          </svg>
-          {%endif%} 
-        </a>
-        {%endfor%} 
-      </th>
-    </tr>
-  </tbody>
-</table>
-{% else %}  
-{% include "tabs/apar.html" %}
-{% endif %}
+<nav>
+  <div class="nav nav-tabs" id="tabApars" role="tablist">
+    {% for apar in trans.apars %}
+    <button class="nav-link" id="nav-apar-{{apar.apar_number}}" data-bs-toggle="tab" data-bs-target="#nav-{{apar.apar_number}}" type="button"
+            role="tab" aria-controls="nav-{{apar.apar_number}}" aria-selected="false">{{apar.apar_number}}
+    </button>
+    {% endfor %}
+  </div>
+</nav>
+<div class="tab-content" id="nav-tabContent">
+  {%for apar in trans.apars %}
+  <div class="tab-pane fade" id="nav-{{apar.apar_number}}" role="tabpanel" aria-labelledby="nav-apar-{{apar.apar_number}}">
+      <iframe name="aparView" frame-btn="nav-apar-{{apar.apar_number}}" src="{{ url_for('edit_apar_data', transmittal_id=trans.id, apar_id=apar.id) }}"
+              width="100%" height="300" style="border:1px solid #E0E0E0;"></iframe>
+  </div>
+  {% endfor %}
+</div>
+<script>
+
+/*
+var iFrames = $('[name="aparView"]')
+Array.from(iFrames).forEach((frame) => {
+  frame.onload = function() {
+      frame.onload = function() {   //On iframe reloaded
+        doReq('GET', "{{ url_for('get_transmittal_issues', trans_id=trans.id)}}", {},
+         updateValidationMarkers, function() {} )
+      }
+  }
+});
+*/
+</script>

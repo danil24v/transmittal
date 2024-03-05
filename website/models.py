@@ -50,16 +50,6 @@ class MCS(db.Model):
     mcs = db.Column(db.String(40), nullable=False)
 
 
-class HoldFields(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.String(6), nullable=False)  # ROCKET or IBM
-    name = db.Column(db.String(16), nullable=False, unique=True)
-    regexp = db.Column(db.String(36))
-    linelen = db.Column(db.Integer, nullable=False)
-    maxsize = db.Column(db.Integer, nullable=False)
-    allowfew = db.Column(db.Boolean, nullable=False, default=False)
-
-
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     type = db.Column(db.String(6))  # ROCKET or IBM
@@ -74,16 +64,6 @@ class JenkinsFields(db.Model):
     prod_id = db.Column(db.Integer, db.ForeignKey('product.id'))
     name = db.Column(db.String(27))
     value = db.Column(db.String(48))
-
-
-class ClosingCodeField(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    code = db.Column(db.String(3))
-    name = db.Column(db.String(20))
-    regexp = db.Column(db.String(36))
-    linelen = db.Column(db.Integer, nullable=False)
-    maxsize = db.Column(db.Integer, nullable=False)
-    is_urgent = db.Column(db.Boolean, nullable=False, default=False)
 
 
 class Hold(db.Model):

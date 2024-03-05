@@ -42,7 +42,9 @@ def create_transmittal(prod_id, apar_number, creator) -> str:
 
 
 def create_hold(trans_id, type, text) -> str:
-    hold_settings = db.session.query(HoldFields).filter(HoldFields.name == type).one()
+    trans = db.session.get(Transmittal, trans_id)
+    prd_type = trans.type.upper()
+    hold_settings = HOLD_FIELDS[prd_type][type]
     if not hold_settings.allowfew:
         ex_holds = db.session.query(Hold).filter(Hold.transmittal_id == trans_id).filter(Hold.type == type).all()
         if len(ex_holds) > 0:

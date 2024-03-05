@@ -13,7 +13,7 @@ class AparsForm(Form):
     def __init__(self, trans_id, request: dict) -> None:
         self.trans_id = trans_id
         fields = [
-            FormField('inptAdda', RegexpValidator(REGEXP_APAR), 'Invalid APAR number.')
+            FormField('inptAdda', RegexpValidator(REGEXP_APAR, allow_empty=True), 'Invalid APAR number.')
         ]
         super().__init__(request, fields)
 

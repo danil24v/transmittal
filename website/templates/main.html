@@ -101,7 +101,7 @@
       {% for trans in transmittals %}
       <tr name="trTrans"
       class="zoom"
-      href="{{ url_for('edit_main', transmittal_id=trans.id) }}"
+      href="{{ url_for('main_transmittal_router', transmittal_id=trans.id) }}"
       style="cursor: pointer;">
         <th scope="row">{{trans.apar_number}}</th>
         <td>{{trans.ticket}}</td>

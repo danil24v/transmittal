@@ -4,6 +4,27 @@
     }
 </style>
 <form method="POST">
+<h6>REQ statement</h6>
+<div class="row">
+    <div class="col-sm-2">
+        <input type="text" class="form-control" name="inptReq" placeholder="SYSMOD ID">
+    </div>
+    <div class="col-sm-2">
+        <button type="submit" name="btnAddReq" class="btn btn-primary" value="Add">Add</button>
+    </div>
+</div>
+<h6>IF-REQ statement</h6>
+<div class="row">
+  <div class="col-sm-2">
+      <input type="text" class="form-control" name="inptIfrFmid" placeholder="FMID">
+  </div>
+  <div class="col-sm-2">
+      <input type="text" class="form-control" name="inptIfrSysmod" placeholder="SYSMOD ID">
+  </div>
+  <div class="col-sm-2">
+      <button type="submit" name="btnAddIfr" class="btn btn-primary" value="Add">Add</button>
+  </div>
+</div>
 <table class="table">
     <thead>
         <tr>
@@ -11,31 +32,6 @@
         </tr>
     </thead>
     <tbody>
-        <tr>
-            <th scope="row">
-                <h6>REQ statement</h6>
-                <div class="row">
-                    <div class="col-sm-2">
-                        <input type="text" class="form-control" name="inptReq" placeholder="SYSMOD ID">
-                    </div>
-                    <div class="col-sm-2">
-                        <button type="submit" name="btnAddReq" class="btn btn-primary" value="Add">Add</button>
-                    </div>
-                </div>
-                <h6>IF-REQ statement</h6>
-                <div class="row">
-                <div class="col-sm-2">
-                    <input type="text" class="form-control" name="inptIfrFmid" placeholder="FMID">
-                </div>
-                <div class="col-sm-2">
-                    <input type="text" class="form-control" name="inptIfrSysmod" placeholder="SYSMOD ID">
-                </div>
-                <div class="col-sm-2">
-                    <button type="submit" name="btnAddIfr" class="btn btn-primary" value="Add">Add</button>
-                </div>
-                </div>
-            </th>
-        </tr>
         <tr>
             <th scope="row">
                 <h6>++DELETE({MODNAME}) .</h6>
@@ -89,6 +85,8 @@
       {% endfor %}
     </tbody>
   </table>
+  {% if trans.mcs|length > 0 %}
+  <button type="submit" class="btn btn-danger" name="btnDelMcs" value="Delete" style="margin-top: 24px;">Delete</button>
+  {% endif %}
 </div>
-<button type="submit" class="btn btn-danger" name="btnDelMcs" value="Delete" style="margin-top: 24px;">Delete</button>
 </form>

@@ -18,87 +18,148 @@
     </div>
   </div>
 </div>
-
+{% include "toasts.html" %}
+{% if edit_apar %}
+  {% include "tabs/apar.html" %}
+{% else %}
 <nav>
-  <div class="nav nav-tabs" id="nav-tab" role="tablist">
-    <button class="nav-link active" id="nav-trans-tab" data-bs-toggle="tab" data-bs-target="#nav-trans" type="button" role="tab" aria-controls="nav-trans" aria-selected="true">Transmittal</button>
-    <button class="nav-link" id="nav-apars-tab" data-bs-toggle="tab" data-bs-target="#nav-apars" type="button" role="tab" aria-controls="nav-apars" aria-selected="false">APARs</button>
-    <button class="nav-link" id="nav-holds-tab" data-bs-toggle="tab" data-bs-target="#nav-holds" type="button" role="tab" aria-controls="nav-holds" aria-selected="false">HOLDs</button>
-    <button class="nav-link" id="nav-rels-tab" data-bs-toggle="tab" data-bs-target="#nav-rels" type="button" role="tab" aria-controls="nav-rels" aria-selected="false">RELs</button>
+  <div class="nav nav-tabs" id="myTab" role="tablist">
+    <button class="nav-link" id="nav-trans-tab" data-bs-toggle="tab" data-bs-target="#nav-trans" type="button"
+            role="tab" apar-view="false" aria-controls="nav-trans" aria-selected="false">Transmittal </button>
+    <button class="nav-link" id="nav-apars-tab" data-bs-toggle="tab" data-bs-target="#nav-apars" type="button"
+            role="tab" apar-view="false" aria-controls="nav-apars"
+            aria-selected="false"
+    {% if trans.type == "ROCKET" %} hidden {% endif %}>APARs </button>
+    <button class="nav-link" id="nav-holds-tab" data-bs-toggle="tab" data-bs-target="#nav-holds" type="button"
+            role="tab" apar-view="false" aria-controls="nav-holds" aria-selected="false">HOLDs </button>
+    <button class="nav-link" id="nav-rels-tab" data-bs-toggle="tab" data-bs-target="#nav-rels" type="button"
+            role="tab" apar-view="false" aria-controls="nav-rels" aria-selected="false"
+    {% if trans.type == "ROCKET" %} hidden {% endif %}>RELs </button>
   </div>
 </nav>
-
-<ul class="nav nav-tabs">
-    <li class="nav-item">
-        <a class="nav-link {% if tab == "transmittal" %} active {% endif %}"
-      aria-current="page"
-      href="{{ url_for('edit_main', transmittal_id=tid) }}">Transmittal
-      {% if "#trans" in trans.valid_issues %}
-        {% include "components/alert_icon.html" %}
-      {% endif %}
-        </a>
-    </li>
-    {% if trans.type != "ROCKET" %}
-    <li class="nav-item">
-        <a class="nav-link {% if tab == "apars" %} active {% endif %}"
-      aria-current="page"
-      href="{{ url_for('edit_apars', transmittal_id=tid) }}">APARs
-      {% if "#apar" in trans.valid_issues %}
-        {% include "components/alert_icon.html" %}
-      {% endif %}
-        </a>
-    </li>
-    {% endif %}
-    <li class="nav-item">
-        <a class="nav-link {% if tab == "holds" %} active {% endif %}"
-      aria-current="page"
-      href="{{ url_for('edit_holds', transmittal_id=tid) }}">HOLDs
-      {% if "#hld" in trans.valid_issues %}
-        {% include "components/alert_icon.html" %}
-      {% endif %}
-        </a>
-    </li>
-    {% if trans.type != "ROCKET" %}
-    <li class="nav-item">
-        <a class="nav-link {% if tab == "rels" %} active {% endif %}"
-      aria-current="page"
-      href="{{ url_for('edit_rels', transmittal_id=tid) }}">RELs
-        </a>
-    </li>
-    {% endif %}
-</ul>
-<div class="container tab" style="margin-top: 20px;">
-  {% include "alerts.html" %}
-
-  {% if tab == "transmittal": %}
-    {% include "tabs/transmit.html" %}
-  {% endif %}
-  {% if tab == "apars": %}
-    {% include "tabs/apars.html" %}
-  {% endif %}
-
-  {% if tab == "holds": %}
-    {% include "tabs/holds.html" %}
-  {% endif %}
-
-  {% if tab == "rels": %}
-    {% include "tabs/rels.html" %}
-  {% endif %}
+<div class="tab-content" id="nav-tabContent">
+   <div style="margin-bottom: 24px;"></div>
+  <div class="tab-pane fade main" id="nav-trans" role="tabpanel" aria-labelledby="nav-trans-tab">
+      {% include "tabs/transmit.html" %}
+  </div>
+  <div class="tab-pane fade main" id="nav-apars" role="tabpanel" aria-labelledby="nav-apars-tab">
+      {% include "tabs/apars.html" %}
+  </div>
+  <div class="tab-pane fade main" id="nav-holds" role="tabpanel" aria-labelledby="nav-holds-tab">
+      {% include "tabs/holds.html" %}
+  </div>
+  <div class="tab-pane fade main" id="nav-rels" role="tabpanel" aria-labelledby="nav-rels-tab">
+      {% include "tabs/rels.html" %}
+  </div>
 </div>
+{% endif %}
+<input type="hidden" id="current-tab" name="current-tab" value="{{tab}}">
 {% endblock %}
+{% block script %}
+<script>
+const tabButtons = $("button[role='tab'][apar-view='false']")
+const currentTab = $("[name='current-tab'")[0]
+const tabBtnTrans = $("#nav-trans-tab")
+const tabBtnApar = $("#nav-apars-tab")
+const tabBtnHolds = $("#nav-holds-tab")
+const tabTrans = $("#nav-trans")
+const tabHolds = $("#nav-holds")
+var iFrames = $('[name="aparView"]')
+var aparsError = false
+var otherTabsError = false
 
+function checkAparsForErrors(){
+  Array.from(iFrames).forEach((frame) => {
+    var btnId = $(frame).attr('frame-btn')
+    var btnEl = $('#'+btnId)
+    var hasError = isContainsErrors(frame)
+    console.log('APAR errors:', hasError)
+    if(hasError){
+        aparsError = true
+        setElementWarningFlag(btnEl, true)
+    }
+    else
+      setElementWarningFlag(btnEl, false)
+  })
+  if(aparsError)
+    setElementWarningFlag(tabBtnApar, true)
+  else
+    setElementWarningFlag(tabBtnApar, false)
+
+  console.log('APARS checked, errors:', aparsError)
+}
+
+function checkTabsForErrors(){
+  otherTabsError = false
+  if(isContainsErrors(tabTrans)){
+    otherTabsError = true
+    setElementWarningFlag(tabBtnTrans, true)
+  } else setElementWarningFlag(tabBtnTrans, false)
+
+  if(isContainsErrors(tabHolds)){
+    otherTabsError = true
+    setElementWarningFlag(tabBtnHolds, true)
+  } else setElementWarningFlag(tabBtnHolds, false)
+}
+
+{% if 'nav-apar-' in tab %}
+showTab("nav-apars-tab");
+{% endif %}
+showTab("{{tab}}")
+
+Array.from(tabButtons).forEach(tabButton => {
+  tabButton.onclick = () => {
+    currentTab.setAttribute('value', tabButton.id);
+  };
+});
+
+Array.from(iFrames).forEach((frame) => {
+  frame.onload = function(e) {
+      aparsError = false
+      checkAparsForErrors()
+  }
+});
+
+window.onload = function(){
+  checkTabsForErrors()
+}
+
+
+</script>
+{% endblock %}
 {% block style %}
 <style>
 body {
     /* background-image: url({{ url_for('static', filename='background.jpg') }}); */
 }
 
-.tab {
-    animation: fadein 0.5s;
+.tab-pane.main {
+    animation: fadein 0.8s;
+}
+
+button.nav-link{
+    animation: fadein-down 0.6s;
+}
+
+svg.flag{
+    animation: shake 0.35s infinite;
+}
+
+@keyframes shake {
+0% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  50% { transform: rotate(0eg); }
+  75% { transform: rotate(-5deg); }
+  100% { transform: rotate(0deg); }
 }
 
 @keyframes fadein {
-    from { transform: translateY(20px); opacity: 0; }
+    from { transform: translateX(-10px); opacity: 0.7; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadein-down {
+    from { transform: translateY(-20px); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
 }
 </style>

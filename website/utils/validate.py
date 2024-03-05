@@ -47,7 +47,12 @@ def validate_multi_line(plain_text: str, max_size: int, max_linelen: int, regexp
 def check_apar_issues(apar) -> str:
     # Validating closing text
     closing_code = apar.closing_code
-    fields = db.session.query(ClosingCodeField).filter(ClosingCodeField.code == apar.closing_code).all()
+    fields = None
+    try:
+        fields = CLOSING_CODES[closing_code]
+    except KeyError:
+        return f'closing_text, unexpected closing code.'
+
     apar_ctext = apar.json_data
     if not apar_ctext:
         apar_ctext = {}
@@ -124,8 +129,8 @@ def validate_ticket(transmittal):
 '''
 
 
-def check_hold_issues(hold):
-    hold_restr = db.session.query(HoldFields).filter(HoldFields.name == hold.type).one()
+def check_hold_issues(prd_type, hold):
+    hold_restr = HOLD_FIELDS[prd_type][hold.type]
     error = validate_multi_line(hold.text, hold_restr.maxsize,
                                 hold_restr.linelen, hold_restr.regexp, allow_empty=True)
     if error:
@@ -137,7 +142,7 @@ def validate_holds(trans_id):
     trans = db.session.query(Transmittal).get(trans_id)
     is_good = True
     for hold in trans.holds:
-        error = check_hold_issues(hold)
+        error = check_hold_issues(trans.type, hold)
         if error:
             is_good = False
     print('is good', is_good)

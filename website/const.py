@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 REGEXP_APAR = '^(PH|PI)\d{5}$'
 REGEXP_SYSMOD = '^(PH|PI|UI|UJ)\d{5}$'
 REGEXP_TICKET = '^[a-zA-Z]{3,8}-\d{3,6}$'
@@ -25,5 +27,29 @@ LEGAL_CHECKLIST = [
     {'id': 'q6', "must": True, 'text': '6. If removing documented function/APIs in this fix, have you received approval through your organizations official approval process? (Answer yes if you are not removing documented function/APIs)', 'parent': ''},
     {'id': 'q7', "must": False, 'text': '7. Does the fix or any customer visible documentation about the fix, contain any IBM or client sensitive information (i.e., username, password or personally identifiable information)?', 'parent': ''}
 ]
+
+ClosingField = namedtuple("ClosingCode", ["name", "regexp", "linelen", "maxsize", "is_urgent"])
+CLOSING_CODES = {
+    "PER": [
+        ClosingField("Problem Conclusion",  "^[a-zA-Z0-9]*$", 10, 100, True),
+        ClosingField("Problem Decription",  "^[a-zA-Z0-9]*$", 10, 100, True)
+    ],
+    "UR1": [
+        ClosingField("Something", "^[a-zA-Z0-9]*$", 10, 100, True),
+        ClosingField("Comments", "^[a-zA-Z0-9]*$", 10, 100, False)
+    ]
+}
+
+HoldField = namedtuple("HoldField", ["regexp", "linelen", "maxsize", "allowfew"])
+HOLD_FIELDS = {
+    "IBM": {
+        "ACTION": HoldField("^[a-zA-Z0-9\\\\s!#@$]*$", 80, 9999, False),
+        "DB2BIND": HoldField("^[a-zA-Z0-9\\\\s!#@$]*$", 80, 9999, True)
+    },
+    "ROCKET": {
+        "ACTION": HoldField("^[a-zA-Z0-9\\\\s!#@$]*$", 80, 9999, False),
+        "DB2BIND": HoldField("^[a-zA-Z0-9\\\\s!#@$]*$", 80, 9999, True)
+    }
+}
 
  

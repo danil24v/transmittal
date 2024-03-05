@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+  {% include "head.html" %}
+  <body>
+    {% include "toasts.html" %}
+    <form method="POST" style="margin: 4px;">
+      <div class="modal fade" id="delAparModal" tabindex="-1" aria-labelledby="delModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="delModalLabel">Delete {{edit_apar.apar_number}}</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure?
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+              <button type="button" class="btn btn-primary" id="btnAparDel">Yes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="lcBox" class="form-control" style="margin-top: 10px;">
+        <h4>Legal checklist (checked - Yes, unchecked - No)</h4>
+        {% for q in legal_checklist %}
+        <div class="form-check" {% if q.parent != "" %} style="margin-left: 18px;" {% endif %}>
+          <input class="form-check-input" type="checkbox" value="{{q.id}}" id="{{q.id}}" name="cbQuestion"
+          parent="{{q.parent}}" {% if q.id in edit_apar.legal_checklist %} checked {% endif %}
+          {% if q.must %} must-check {% endif %}>
+          <label class="form-check-label" id="{{q.id}}" style="font-size:12px;"">
+            {{q.text}}
+          </label>
+        </div>
+        {% endfor %}
+      </div>
+      <div id="lbErrorLl" class="text-danger" errorFor="lcBox"></div>
+      <div id="boxHiper" class="form-control" style="margin-top: 10px;"
+           {% if trans.apar_number != edit_apar.apar_number %} hidden {% endif %}>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="cbHiper" name="cbAdd" value="hp"
+                  {% if "hp" in edit_apar.legal_checklist %} checked {% endif %}
+          >
+          <label class="form-check-label" >
+            HIPER
+          </label>
+        </div>
+        <div id="boxHiperSub" class="form-control" >
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="cbAdd" value="dl"
+                  {%if "dl" in edit_apar.legal_checklist %} checked {% endif %}
+          >
+          <label class="form-check-label" >
+            Data loss
+          </label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="cbAdd" value="fl"
+                  {%if "fl" in edit_apar.legal_checklist %} checked {% endif %}
+          >
+          <label class="form-check-label" >
+            Function Loss
+          </label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="cbAdd" value="pf"
+                  {%if "pf" in edit_apar.legal_checklist %} checked {% endif %}
+          >
+          <label class="form-check-label" >
+            Perfomance
+          </label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="cbAdd" value="ps"
+                  {%if "ps" in edit_apar.legal_checklist %} checked {% endif %}
+          >
+          <label class="form-check-label" >
+            Product Specific
+          </label>
+        </div>
+        </div>
+      </div>
+      <div id="boxCode" class="form-control" style="margin-top: 10px;">
+        <h4>Closing code</h4>
+        <select class="form-select" name="selCode" id="selCode" >
+          <option value="">Select code</option>
+          {% for code in cl_codes %}
+            <option {% if code == edit_apar.closing_code %} selected  {% endif %} value="{{code}}">{{code}}</option>
+          {% endfor %}
+        </select>
+        <div id="lbErrorCode" class="text-danger" errorFor="selCode"></div>
+        <table class="table" id="tblClosingText">
+          <thead>
+            <tr>
+              <th scope="col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {%for code in closing_fields.keys() %}
+              {%for field in closing_fields[code] %}
+              <tr>
+                <th scope="row">
+                  <a>{{field.name}}</a>
+                  <textarea
+                  name="clField {{code}}:{{field.name}}"
+                  class="form-control"
+                  id="clField {{code}}:{{field.name}}"
+                  rows="5"
+                  cinfo="true"
+                  ccode="{{code}}"
+                  cname="{{field.name}}"
+                  style="margin-bottom: 10px;"
+                  >{{get_dict_val(edit_apar.json_data, field.name)}}</textarea>
+                  <div class="invalid-feedback" errorFor="clField {{code}}:{{field.name}}"></div>
+                </th>
+              </tr>
+              {%endfor%}
+            {%endfor%}
+          </tbody>
+        </table>
+      </div>
+      <div class="row" style="margin-top: 20px;">
+        <div class="col">
+          <button type="submit" name="btnSave" value="Save" class="btn btn-outline-success">Save</button>
+            {% if edit_apar.apar_number != trans.apar_number %}
+          <input type="button" id="btnDel" name="btnDel" value="Delete" class="btn btn-outline-danger"
+          data-bs-toggle="modal" data-bs-target="#delAparModal"/>
+            {% endif %}
+        </div>
+      </div>
+    </form>
+  </body>
+<script>
+const showHideClosingFileds = (current_code, fields) => {
+  for (let i = 0; i < fields.length; i++) {
+    const field = fields[i];
+    const fcode = field.getAttribute("ccode");
+    const parent = field.parentElement;
+    if (fcode !== current_code) {
+      setVisibility(parent, false);
+    } else {
+      setVisibility(parent, true);
+    }
+  }
+};
+
+const showHideLegalList = (checkboxes) => {
+  let lastParent = null;
+  for (let i = 0; i < checkboxes.length; i++) {
+    const cb = checkboxes[i];
+    const pquestion = cb.getAttribute("parent");
+    if (pquestion === "") {
+      lastParent = cb;
+    } else if (pquestion !== "" && lastParent !== null) {
+      /* console.log(lastParent.id); */
+      if (pquestion !== lastParent.id) {
+        return;
+      }
+      if (lastParent.checked) {
+        setEnabled(cb, true);
+      } else {
+        setEnabled(cb, false);
+      }
+    }
+  }
+};
+
+const validateClosingField = (restr, field) => {
+  const type = field.getAttribute("cname");
+  const code = field.getAttribute("ccode");
+  const text = field.value;
+  var restrFiltred;
+  restr[code].forEach((restr) => { if(restr[0] == type) restrFiltred = restr; return; })
+  const currentRestr = {
+    regexp: restrFiltred[1],
+    linelen: restrFiltred[2],
+    maxsize: restrFiltred[3],
+    isUrgent: restrFiltred[4]
+  };
+  const error = validateInput(currentRestr, text);
+  console.log("Error:" + error);
+  if (error !== "") {
+    setElementError(field, true);
+    setError(field.id, error, true);
+  } else {
+    setElementError(field, false);
+    setError(field.id, error, false);
+  }
+};
+
+const validateCheckBoxes = (checkboxes, container) => {
+  let errorMsg = "";
+  let lastParent = null;
+  for (let i = 0; i < checkboxes.length; i++) {
+    const cb = checkboxes[i];
+    if (!cb.checked && cb.hasAttribute("must-check")) {
+      console.log("Must", cb.id);
+      errorMsg = "Question " + cb.id + " must be checked.";
+      break;
+    }
+    else if (cb.checked && cb.id == "q2b"){
+      let cb2 = document.getElementById("q2")
+      if(cb2.checked){
+        errorMsg = "If answer to question 2B is Yes (checked), it prohibits shipping PTF.";
+        break;
+      }
+    }
+  }
+  if (errorMsg !== "") {
+    setError("lcBox", errorMsg, true);
+    setElementError(container, true);
+    return;
+  }
+  setElementError(container, false);
+  setError("lcBox", "", false);
+};
+
+const checkClosingCode = (selElement) => {
+  setElementError(selElement, false);
+  setError("selCode", "", false);
+  if (selElement.value === "") {
+    setError("selCode", "Closing code must be selected.", true);
+    setElementError(selElement, true);
+  }
+};
+
+const checkHiperChecks = (cbMain, cbAll, contSub) => {
+  if (!cbMain.checked) {
+    for (let i = 0; i < cbAll.length; i++) {
+      const cb = cbAll[i];
+      cb.checked = false;
+    }
+    contSub.style.display = "none";
+  } else {
+    contSub.style.display = "";
+  }
+};
+
+const processAparEdit = () => {
+  const closingInfoFields = $("textarea[cinfo='true']");
+  const cBoxesLegal = $("input[name='cbQuestion']");
+  const cbContainer = $("#lcBox")[0];
+  const btnAparDel = $("#btnAparDel")[0];
+  const selCode = $("#selCode")[0];
+  const cBoxesHiper = $("input[name='cbAdd']");
+  const contHiperSub = $("#boxHiperSub")[0];
+  const cbHiper = $("#cbHiper")[0];
+  const fRestrictions = JSON.parse(JSON.stringify({{ closing_restrs | tojson }}))
+  cbContainer.onclick = () => {
+    validateCheckBoxes(cBoxesLegal, cbContainer);
+    showHideLegalList(cBoxesLegal);
+  };
+  selCode.onchange = () => {
+    console.log("selcode");
+    const code = selCode.value;
+    showHideClosingFileds(code, closingInfoFields);
+    checkClosingCode(selCode);
+  };
+  console.log(btnAparDel);
+  btnAparDel.onclick = () => {
+    console.log("onclick");
+    const url = '/delete/apar/{{edit_apar.id}}';
+    doReq("DELETE", url, null, redirProd = () => window.location.replace("/edit/{{trans.id}}/apars", null));
+  };
+  cbHiper.onclick = () => {
+    checkHiperChecks(cbHiper, cBoxesHiper, contHiperSub);
+  };
+  for (let i = 0; i < closingInfoFields.length; i++) {
+    const field = closingInfoFields[i];
+    validateClosingField(fRestrictions, field);
+    field.onkeyup = () => {
+      validateClosingField(fRestrictions, field);
+    };
+  }
+  checkClosingCode(selCode);
+  showHideClosingFileds('{{edit_apar.closing_code}}', closingInfoFields);
+  validateCheckBoxes(cBoxesLegal, cbContainer);
+  showHideLegalList(cBoxesLegal);
+  checkHiperChecks(cbHiper, cBoxesHiper, contHiperSub);
+};
+
+processAparEdit();
+</script>
+</html>

@@ -60,6 +60,14 @@ def copy(trans_id):
     db.session.commit()
     return "OK"
 
-@app.route('/testvideo/', methods=['GET'])
-def test():
-    return render_template("test.html")
+@app.route('/aparslist/<trans_id>', methods=['GET'])
+@login_required
+def get_transmittal_issues(trans_id):
+    trans = db.session.query(Transmittal).get(trans_id)
+    if not trans:
+        return f'Transmittal {trans_id} can not be found', 400
+    ret_dict = {'apars': [],
+               'issues': trans.valid_issues}
+    for apar in trans.apars:
+        ret_dict['apars'].append(apar.apar_number)
+    return jsonify(ret_dict)

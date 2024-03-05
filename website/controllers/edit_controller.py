@@ -1,3 +1,5 @@
+import sys
+
 from flask import render_template, request, flash, jsonify, send_file, redirect
 from sqlalchemy import desc
 from .. import app, db
@@ -15,86 +17,63 @@ from ..forms.form_trans import MainTransForm
 
 
 # ================== HANDLE EDIT PAGE =====================
-def get_trans_edit_template(transmittal_id, active_tab, current_edit_apar=None,
-                            transmittal_obj=None,
-                            load_holds=False, closing_fields=[], cl_codes=[], apar_ctext=[]):
-    transmittal = transmittal_obj
-    if not transmittal_obj:
-        transmittal = db.session.get(Transmittal, transmittal_id)
+def get_trans_edit_template(transmittal, active_tab, current_edit_apar=None,
+                            load_holds=True, closing_fields=[], cl_codes=[], apar_ctext=[],
+                            html='transmittal.html'):
     hold_fields = []
-    if load_holds:
-        hold_fields = db.session.query(HoldFields).all()
     if transmittal is None:
         return jsonify({'msg': f'{transmittal_id} unknown transmittal!'})
 
-    return render_template("transmittal.html", tid=transmittal_id,
+    hold_fields = HOLD_FIELDS[transmittal.type.upper()]
+    holds_fields_json = json.dumps(hold_fields)
+
+    return render_template(html,
                            tab=active_tab,
                            trans=transmittal,
                            edit_apar=current_edit_apar,
-                           hold_types=hold_fields,
+                           hold_fields=hold_fields,
+                           holds_fields_json=hold_fields,
                            closing_fields=closing_fields,
                            cl_codes=cl_codes,
                            apar_ctext=apar_ctext,
                            legal_checklist=LEGAL_CHECKLIST)
-
 
 # ===============================================
 #                   TRANSMITTAL EDIT
 # ===============================================
 @app.route('/edit/<transmittal_id>/', methods=['GET', 'POST'])
 @login_required
-def edit_main(transmittal_id):
+def main_transmittal_router(transmittal_id):
+    try:
+        int(transmittal_id)
+    except:
+        return 'Why are you doing that?'
+
     trans = db.session.get(Transmittal, transmittal_id)
-    form = None
-    if trans.type == "IBM":
-        form = MainTransForm(transmittal_id, request)
-    else:
-        form = MainTransFormRocket(transmittal_id, request)
-    return get_trans_edit_template(transmittal_id, 'transmittal', transmittal_obj=trans)
-
-
-# ===============================================
-#                   HOLDS EDIT
-# ===============================================
-@app.route('/edit/<transmittal_id>/holds', methods=['GET', 'POST'])
-@login_required
-def edit_holds(transmittal_id):
-    active_tab = 'holds'
-    form = HoldsForm(transmittal_id, request)
-
-    return get_trans_edit_template(transmittal_id, active_tab, load_holds=True)
-
-
-# ===============================================
-#                   RELS EDIT
-# ===============================================
-@app.route('/edit/<transmittal_id>/rels', methods=['GET', 'POST'])
-@login_required
-def edit_rels(transmittal_id):
-    active_tab = 'rels'
-
-    form = RelsForm(transmittal_id, request)
-
-    return get_trans_edit_template(transmittal_id, active_tab)
-
-
-# ===============================================
-#                   APAR EDIT
-# ===============================================
-@app.route('/edit/<transmittal_id>/apars', methods=['GET', 'POST'])
-@login_required
-def edit_apars(transmittal_id):
-    active_tab = 'apars'
-    form = AparsForm(transmittal_id, request)
-    return get_trans_edit_template(transmittal_id, active_tab)
+    print('sizeof trans:', sys.getsizeof(trans), sys.getsizeof(trans.apars))
+    current_tab = request.form.get('current-tab')
+    if not current_tab:
+        current_tab = 'nav-trans-tab'
+    if current_tab == 'nav-trans-tab':
+        if trans.type == 'IBM':
+            MainTransForm(transmittal_id, request)
+        else:
+            MainTransFormRocket(transmittal_id, request)
+    elif current_tab == 'nav-apars-tab':
+        AparsForm(transmittal_id, request)
+    elif 'nav-apar-' in current_tab:
+        AparsForm(transmittal_id, request)
+    elif current_tab == 'nav-holds-tab':
+        HoldsForm(transmittal_id, request)
+    elif current_tab == 'nav-rels-tab':
+        RelsForm(transmittal_id, request)
+    return get_trans_edit_template(trans, current_tab)
 
 
 @app.route('/edit/<transmittal_id>/apars/<apar_id>', methods=['GET', 'POST'])
 @login_required
 def edit_apar_data(transmittal_id, apar_id):
-    active_tab = 'apars'
-    form = AparEditForm(apar_id, request)
-
+    AparEditForm(apar_id, request)
     trans = db.session.get(Transmittal, transmittal_id)
     apar = db.session.get(Apar, apar_id)
 
@@ -102,12 +81,19 @@ def edit_apar_data(transmittal_id, apar_id):
 
     cl_codes = []
     main_apar_number = trans.apar_number
-    closing_fields = db.session.query(ClosingCodeField)
+    restrictions_json = []
+    closing_fields = CLOSING_CODES
     if apar.closing_code:
         cl_codes.append(apar.closing_code)
-    for field in closing_fields:
-        cl_codes.append(field.code)
+    for code in closing_fields.keys():
+        cl_codes.append(code)
     cl_codes = list(dict.fromkeys(cl_codes))
 
-    return get_trans_edit_template(transmittal_id, active_tab, current_edit_apar=apar,
-                       closing_fields=closing_fields, cl_codes=cl_codes, apar_ctext=apar_ctext)
+    return render_template('apar.html',
+                           trans=trans,
+                           edit_apar=apar,
+                           closing_fields=closing_fields,
+                           cl_codes=cl_codes,
+                           apar_ctext=apar_ctext,
+                           closing_restrs=CLOSING_CODES,
+                           legal_checklist=LEGAL_CHECKLIST)
